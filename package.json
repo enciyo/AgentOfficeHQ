@@ -1,0 +1,43 @@
+{
+  "name": "agent-office",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Claude Code CLI ajanlarını 3D bir ofiste yöneten ve görselleştiren web uygulaması",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "npm run build && tsx src/server/main.ts",
+    "build": "vite build",
+    "bg": "scripts/service.sh start",
+    "bg:stop": "scripts/service.sh stop",
+    "bg:status": "scripts/service.sh status",
+    "bg:logs": "scripts/service.sh logs",
+    "dev": "vite",
+    "server": "tsx watch src/server/main.ts",
+    "typecheck": "tsc",
+    "test": "node --import tsx --test \"src/**/*.test.ts\""
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.6",
+    "@hono/zod-validator": "^0.9.1",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "hono": "^4.13.16",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "0.170.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.170.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}
