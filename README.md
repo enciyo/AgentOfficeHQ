@@ -110,7 +110,7 @@ This walks through a request with the default company. It works without the opti
 | Click the floor | Your character walks there |
 | `Esc` | Close the panel / task board |
 
-The player's name and color change in ⚙️ Settings, which opens as a full page (Esc closes it). ⚙️ Settings → *General* has a Performance–Quality slider for the 3D office (resolution, shadows, ambient occlusion, frame cap); by default it steps down by itself if the frame rate stays low. Nothing is drawn while a full-screen page covers the office.
+The player's name and color change in ⚙️ Settings, which opens as a full page (Esc closes it). ⚙️ Settings → *General* has a Performance–Quality slider for the 3D office (resolution, shadows, ambient occlusion, frame cap); by default it steps down by itself if the frame rate stays low, undoes a step that did not make frames faster, and steps back up to the chosen level once there is room again (slowly, so a borderline GPU does not bounce between levels). Nothing is drawn while a full-screen page covers the office.
 
 ## Structure
 
