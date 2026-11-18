@@ -5,6 +5,8 @@ import type { DomainEvent, LogBook, Publisher, StateStore } from '../domain/port
 import type { PresenceBoard } from './presence.ts';
 
 export class Notifier {
+  private readonly taskListeners: ((t: Task) => void)[] = [];
+
   constructor(
     private readonly store: StateStore,
     private readonly presence: PresenceBoard,
@@ -29,6 +31,12 @@ export class Notifier {
 
   task(t: Task) {
     this.publish({ type: 'task', task: t });
+    for (const listener of this.taskListeners) listener(t);
+  }
+
+  /** Called with every task that changed, after it went out. */
+  onTask(listener: (t: Task) => void) {
+    this.taskListeners.push(listener);
   }
 
   /** `detail` is the long form of `text`: it goes to the log on disk but not out to the live events. */

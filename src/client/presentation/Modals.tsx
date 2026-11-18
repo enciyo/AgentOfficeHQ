@@ -66,7 +66,7 @@ function SettingsForm() {
   const [form, setForm] = useState({
     language: settings.language, playerName: settings.playerName || t('ui.you'), playerColor: settings.playerColor || '#ff7a59',
     officeName: office?.name || '', floorColor: office?.floorColor || '#f6f7f9', wallColor: office?.wallColor || '#ffffff',
-    binaries: { ...settings.binaries }, defaultProvider: settings.defaultProvider || providers[0]?.id || '', defaultModels: { ...settings.defaultModels }, modelOverrides: { ...settings.modelOverrides }, defaultCwd: settings.defaultCwd || '', worktrees: !!settings.worktrees, approveMerges: !!settings.approveMerges, resumeInterrupted: !!settings.resumeInterrupted, github: !!settings.github, approvalPolicy: settings.approvalPolicy ?? '', officeNotes: settings.officeNotes ?? '',
+    binaries: { ...settings.binaries }, defaultProvider: settings.defaultProvider || providers[0]?.id || '', defaultModels: { ...settings.defaultModels }, modelOverrides: { ...settings.modelOverrides }, defaultCwd: settings.defaultCwd || '', worktrees: !!settings.worktrees, approveMerges: !!settings.approveMerges, journalFile: !!settings.journalFile, resumeInterrupted: !!settings.resumeInterrupted, github: !!settings.github, approvalPolicy: settings.approvalPolicy ?? '', officeNotes: settings.officeNotes ?? '',
   });
   const [limits, setLimits] = useState(() => ({ ...settings.limits }));
   // `step` is what the arrows add, not a rule: the form has no native validation, the server decides
@@ -77,7 +77,7 @@ function SettingsForm() {
       setLimits({ ...limits, [k]: whole ? Math.floor(value) : value });
     },
   });
-  const field = (k: Exclude<keyof typeof form, 'binaries' | 'defaultModels' | 'modelOverrides' | 'worktrees' | 'approveMerges' | 'resumeInterrupted' | 'github'>) => ({ value: form[k], onChange: (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value }) });
+  const field = (k: Exclude<keyof typeof form, 'binaries' | 'defaultModels' | 'modelOverrides' | 'worktrees' | 'approveMerges' | 'journalFile' | 'resumeInterrupted' | 'github'>) => ({ value: form[k], onChange: (e: { target: { value: string } }) => setForm({ ...form, [k]: e.target.value }) });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -189,6 +189,8 @@ function SettingsForm() {
               <label className="check"><input type="checkbox" checked={form.approveMerges} onChange={e => setForm({ ...form, approveMerges: e.target.checked })} />{t('settings.approveMerges')}</label>
               <div className="hint">{t('settings.approveMergesHint')}</div>
             </>}
+            <label className="check"><input type="checkbox" checked={form.journalFile} onChange={e => setForm({ ...form, journalFile: e.target.checked })} />{t('settings.journalFile')}</label>
+            <div className="hint">{t('settings.journalFileHint')}</div>
             <label className="check"><input type="checkbox" checked={form.github} onChange={e => setForm({ ...form, github: e.target.checked })} />{t('settings.github')}</label>
             <div className="hint"><RichText text={t('settings.githubHint')} /> <button type="button" className="sm" onClick={refreshVisitors}>{t('settings.githubRefresh')}</button></div>
             <label className="check"><input type="checkbox" checked={form.resumeInterrupted} onChange={e => setForm({ ...form, resumeInterrupted: e.target.checked })} />{t('settings.resume')}</label>

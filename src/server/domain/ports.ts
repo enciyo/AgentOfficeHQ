@@ -31,6 +31,8 @@ export interface FileTree {
   raw(root: string, rel: string): Buffer | null;
   /** Deletes a file or folder inside the root; false when it is outside the root, the root itself or missing. */
   remove(root: string, rel: string): boolean;
+  /** Writes a text file inside the root, making its folders; false when it is outside the root or cannot be written. */
+  write(root: string, rel: string, text: string): boolean;
 }
 
 /** Where one agent works when isolation is on: its own checkout on its own branch. */

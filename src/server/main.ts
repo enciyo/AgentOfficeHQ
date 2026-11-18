@@ -6,6 +6,7 @@ import { resolveLocale } from '../shared/i18n/index.ts';
 import { Agents } from './application/agents.ts';
 import { Approvals } from './application/approvals.ts';
 import { Github } from './application/github.ts';
+import { Journals } from './application/journals.ts';
 import { Knowledge } from './application/knowledge.ts';
 import { Schedules } from './application/schedules.ts';
 import { Notifier } from './application/notifier.ts';
@@ -43,7 +44,10 @@ const schedules = new Schedules(store, notify, tasks, i18n);
 const approvals = new Approvals(store, notify, tasks, i18n);
 const knowledge = new Knowledge(store, notify, i18n);
 const github = new Github(store, notify, tasks, new GithubCli(), i18n);
-const workspace = new Workspace(store, notify, runner, logs, i18n, agents, new LocalFileTree(), isolation);
+const fileTree = new LocalFileTree();
+const workspace = new Workspace(store, notify, runner, logs, i18n, agents, fileTree, isolation);
+const journals = new Journals(store, fileTree, i18n);
+notify.onTask(task => journals.touch(task));
 
 const app = createApp({ agents, tasks, schedules, approvals, knowledge, github, workspace, events, i18n, clientDir: path.join(ROOT, 'dist', 'client') });
 

@@ -84,6 +84,26 @@ export class LocalFileTree implements FileTree {
     }
   }
 
+  write(root: string, rel: string, text: string): boolean {
+    const base = path.resolve(root);
+    const full = path.resolve(base, rel);
+    if (!full.startsWith(base + path.sep)) return false;
+    try {
+      // The nearest folder that exists must really be inside the root before any folder is made under it
+      let dir = path.dirname(full);
+      while (!fs.existsSync(dir)) dir = path.dirname(dir);
+      const realBase = fs.realpathSync(base), realDir = fs.realpathSync(dir);
+      if (realDir !== realBase && !realDir.startsWith(realBase + path.sep)) return false;
+      fs.mkdirSync(path.dirname(full), { recursive: true });
+      // An existing entry must be a regular file inside the root, not a link out of it
+      if (!inside(root, rel) || (fs.existsSync(full) && !this.file(root, rel))) return false;
+      fs.writeFileSync(full, text);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   /** A regular file inside the root, following no symlink out of it. */
   private file(root: string, rel: string) {
     const full = inside(root, rel);

@@ -82,7 +82,7 @@ export class JsonStateStore implements StateStore {
   }
 
   private load({ cwd, language }: { cwd: string; language: Locale }): State {
-    const defaults = { language, binaries: {} as Record<string, string>, defaultProvider: 'claude', defaultModels: {} as Record<string, string>, modelOverrides: {} as Record<string, string>, defaultCwd: cwd, worktrees: false, approveMerges: false, limits: DEFAULT_LIMITS, resumeInterrupted: false, approvalPolicy: createT(language)('settings.approvalPolicyDefault'), officeNotes: '', github: false, playerName: 'CEO', playerColor: '#ff7a59' };
+    const defaults = { language, binaries: {} as Record<string, string>, defaultProvider: 'claude', defaultModels: {} as Record<string, string>, modelOverrides: {} as Record<string, string>, defaultCwd: cwd, worktrees: false, approveMerges: false, journalFile: false, limits: DEFAULT_LIMITS, resumeInterrupted: false, approvalPolicy: createT(language)('settings.approvalPolicyDefault'), officeNotes: '', github: false, playerName: 'CEO', playerColor: '#ff7a59' };
     const saved = this.readSaved();
     if (saved) {
       const { claudeBin, ...savedSettings } = saved.settings ?? {}; // claudeBin: pre-providers setting

@@ -21,7 +21,7 @@ export const pauseOffice = z.object({ paused: z.boolean() });
 export const completeTask = z.object({ result: text.default('') });
 export const delegateTask = z.object({ from: text.default(''), to: text, task: text, parentTaskId: text.optional() });
 export const updateOffice = z.object({ name: text, floorColor: text, wallColor: text }).partial();
-export const updateSettings = z.object({ language: z.enum(LOCALES), binaries: z.record(z.string(), text), defaultProvider: text, defaultModels: z.record(z.string(), text), modelOverrides: z.record(z.string(), text), defaultCwd: text, worktrees: z.boolean(), approveMerges: z.boolean(), limits: z.lazy(() => limits), resumeInterrupted: z.boolean(), approvalPolicy: text, officeNotes: text, github: z.boolean(), playerName: text, playerColor: text }).partial();
+export const updateSettings = z.object({ language: z.enum(LOCALES), binaries: z.record(z.string(), text), defaultProvider: text, defaultModels: z.record(z.string(), text), modelOverrides: z.record(z.string(), text), defaultCwd: text, worktrees: z.boolean(), approveMerges: z.boolean(), journalFile: z.boolean(), limits: z.lazy(() => limits), resumeInterrupted: z.boolean(), approvalPolicy: text, officeNotes: text, github: z.boolean(), playerName: text, playerColor: text }).partial();
 const clock = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'err.invalid');
 export const createSchedule = z.object({ agentId: text, prompt: z.string().trim().min(1, 'err.taskEmpty'), intervalMinutes: z.number().int(), at: clock.optional() });
 export const updateSchedule = z.object({ prompt: z.string().trim().min(1, 'err.taskEmpty'), intervalMinutes: z.number().int(), at: clock, enabled: z.boolean() }).partial();

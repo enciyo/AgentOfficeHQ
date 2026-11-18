@@ -4,9 +4,10 @@ import type { OutputFile } from '../application/ports.ts';
 import type { TKey } from '../../shared/i18n/index.ts';
 import type { Approval } from '../../shared/types.ts';
 import { formatBytes, formatDateTime, formatDuration, formatTime, taskStatusLabel } from '../domain/format.ts';
-import { chainActive, chainFiles, costBreakdown, fileOwners, fileTree, filterTrees, kanbanColumns, taskCostText, taskTrees, treeCostText, type FileNode, type FlowFilter, type TaskNode } from '../domain/views.ts';
+import { chainActive, chainFiles, costBreakdown, fileOwners, fileTree, filterTrees, kanbanColumns, requestJournals, taskCostText, taskTrees, treeCostText, type FileNode, type FlowFilter, type TaskNode } from '../domain/views.ts';
 import { CopyButton, Markdown, Who } from './common.tsx';
 import { Leaderboard } from './Fun.tsx';
+import { JournalView } from './Journal.tsx';
 import { KnowledgeTab } from './Knowledge.tsx';
 import { ChainHold, HeldReport, MergeNotice, MergePill, RetryButton, TaskCard } from './TaskCard.tsx';
 import { TaskChanges } from './TaskChanges.tsx';
@@ -91,8 +92,9 @@ function Flow() {
   const tasks = useOffice(s => s.tasks);
   const agents = useOffice(s => s.agents);
   const selected = useOffice(s => s.flowTaskId);
+  const journalOf = useOffice(s => s.journalOf);
   const hidden = useOffice(s => s.flowHidden);
-  const { showTask, restoreFlow } = useActions();
+  const { showTask, showJournal, restoreFlow } = useActions();
   const t = useT();
   const [filter, setFilter] = useState<FlowFilter>('all');
   const [query, setQuery] = useState('');
@@ -118,7 +120,8 @@ function Flow() {
         {trees.length > FLOW_LIMIT && <div className="hint">{t('flow.more', { n: trees.length - FLOW_LIMIT })}</div>}
       </div>
       <aside className="flow-side">
-        {selected && tasks[selected] ? <TaskDetail taskId={selected} onBack={() => showTask(null)} /> : <Spend />}
+        {journalOf && tasks[journalOf] ? <JournalView taskId={journalOf} onClose={() => showJournal(null)} />
+          : selected && tasks[selected] ? <TaskDetail taskId={selected} onBack={() => showTask(null)} /> : <Spend />}
       </aside>
     </div>
   );
@@ -154,7 +157,7 @@ function ChainNode({ node, root = false, selected }: { node: TaskNode; root?: bo
   const t = useT();
   const locale = useLocale();
   const tasks = useOffice(s => s.tasks);
-  const { showTask, showOutputs, cancelChain, clearFlow } = useActions();
+  const { showTask, showOutputs, showJournal, cancelChain, clearFlow } = useActions();
   const { task, children } = node;
   // A step picked from elsewhere (e.g. a file's author) is revealed inside its chain
   const holdsSelected = useMemo(() => !!selected && selected !== task.id && containsTask(node, selected), [node, selected, task.id]);
@@ -177,6 +180,9 @@ function ChainNode({ node, root = false, selected }: { node: TaskNode; root?: bo
           <button type="button" className="files-chip" title={t('flow.openFiles')}
             onClick={e => { e.stopPropagation(); showOutputs(t('files.ofTask', { id: task.id }), files); }}>📄 {files.length}</button>
         )}
+        {root && children.length > 0 && (
+          <button type="button" className="ghost sm" title={t('journal.openHint')} onClick={e => { e.stopPropagation(); showJournal(task.id); }}>📒</button>
+        )}
         {root && chainActive(node) && (
           <button type="button" className="danger sm" onClick={e => { e.stopPropagation(); if (confirm(t('task.cancelChainConfirm'))) cancelChain(task.id); }}>{t('task.cancelChain')}</button>
         )}
@@ -198,7 +204,7 @@ const containsTask = (n: TaskNode, id: string): boolean => n.children.some(c => 
 function TaskDetail({ taskId, onBack }: { taskId: string; onBack: () => void }) {
   const task = useOffice(s => s.tasks[taskId])!;
   const tasks = useOffice(s => s.tasks);
-  const { showOutputs, select, cancelTask, cancelChain } = useActions();
+  const { showOutputs, showJournal, select, cancelTask, cancelChain } = useActions();
   const t = useT();
   const locale = useLocale();
   const chain = useMemo(() => chainFiles(Object.values(tasks), task.id), [tasks, task.id]);
@@ -217,6 +223,7 @@ function TaskDetail({ taskId, onBack }: { taskId: string; onBack: () => void }) 
       <div className="td-actions">
         {chain.length > 0 && <button className="primary sm" onClick={() => showOutputs(t('files.ofTask', { id: task.id }), chain)}>{t('flow.openFiles')} ({chain.length})</button>}
         <button className="sm" onClick={() => select(task.agentId, true)}>{t('flow.openAgent')}</button>
+        <button className="sm" title={t('journal.openHint')} onClick={() => showJournal(task.id)}>{t('journal.open')}</button>
         <RetryButton task={task} />
         {open && <button className="danger sm" onClick={() => cancelTask(task.id)}>{t('task.cancel')}</button>}
         {open && hasKids && <button className="danger sm" onClick={() => confirm(t('task.cancelChainConfirm')) && cancelChain(task.id)}>{t('task.cancelChain')}</button>}
@@ -248,12 +255,17 @@ function Files() {
   const tasks = useOffice(s => s.tasks);
   const doneCount = useMemo(() => Object.values(tasks).filter(x => x.status === 'done').length, [tasks]);
   const owners = useMemo(() => fileOwners(Object.values(tasks)), [tasks]);
+  const journals = useMemo(() => requestJournals(Object.values(tasks)), [tasks]);
+  // A journal shown in the viewer instead of a file; picking a file closes it
+  const [journalOf, setJournalOf] = useState<string | null>(null);
+  useEffect(() => setJournalOf(null), [currentPath]);
+  const pick = useCallback((path: string) => { setJournalOf(null); openOutput(path); }, [openOutput]);
   const [list, setList] = useState<{ root: string; files: OutputFile[] } | null>(null);
   const [filter, setFilter] = useState('');
   const [current, setCurrent] = useState<{ path: string; text: string; truncated: boolean; binary: boolean } | null>(null);
   const [mode, setMode] = useState<'preview' | 'source'>('preview');
   const [full, setFull] = useState(false);
-  const fullscreen = full && !!current;
+  const fullscreen = full && !!current && !journalOf;
 
   // While it covers the office, keys belong to the reader: Esc leaves full screen only, and nothing walks the player
   useEffect(() => {
@@ -292,6 +304,7 @@ function Files() {
   };
 
   const owner = current && owners.get(current.path);
+  const fileJournal = current && journals.find(j => current.path.startsWith(`docs/${j.code}/`));
   const canPreview = !!current && PREVIEWABLE.test(current.path);
   const isMd = !!current && /\.(md|markdown|txt)$/i.test(current.path);
   return (
@@ -309,20 +322,27 @@ function Files() {
         ) : <div className="files-root" title={list?.root}>{list?.root}</div>}
         <div className="files-tree">
           {list && !visible.length && <div className="empty">{t(focus ? 'files.focusEmpty' : 'files.empty')}</div>}
-          {recent.length > 0 && (
-            <div className="recent">
-              {recent.map(f => <button key={f.path} className={current?.path === f.path ? 'on' : ''} onClick={() => openOutput(f.path)}>🕑 {f.path} <small>{formatDateTime(f.mtime, locale)}</small></button>)}
+          {!filter && !focus && journals.length > 0 && (
+            <div className="recent journals">
+              <div className="sec-label">{t('journal.outputs')}</div>
+              {journals.slice(0, 6).map(j => <button key={j.code} className={journalOf === j.rootId ? 'on' : ''} onClick={() => setJournalOf(j.rootId)}>📒 {j.code} <small>{formatDateTime(j.at, locale)}</small></button>)}
             </div>
           )}
-          {tree.map(n => <FileRow key={n.path} node={n} depth={0} current={current?.path} onPick={openOutput} onDelete={remove} forceOpen={!!filter || !!focus} />)}
+          {recent.length > 0 && (
+            <div className="recent">
+              {recent.map(f => <button key={f.path} className={current?.path === f.path ? 'on' : ''} onClick={() => pick(f.path)}>🕑 {f.path} <small>{formatDateTime(f.mtime, locale)}</small></button>)}
+            </div>
+          )}
+          {tree.map(n => <FileRow key={n.path} node={n} depth={0} current={current?.path} onPick={pick} onDelete={remove} forceOpen={!!filter || !!focus} />)}
         </div>
       </div>
       <div className={`files-view${fullscreen ? ' fullscreen' : ''}`}>
-        {!current ? <div className="empty">{t(currentPath ? 'files.gone' : 'files.pick')}</div> : (
+        {journalOf && tasks[journalOf] ? <JournalView taskId={journalOf} /> : !current ? <div className="empty">{t(currentPath ? 'files.gone' : 'files.pick')}</div> : (
           <>
             <div className="files-head">
               <div className="files-path" title={current.path}>{current.path}</div>
               {owner && <button className="ghost sm owner" title={t('files.ownerHint')} onClick={() => showTask(owner.id)}>✍️ <Who id={owner.agentId} /> #{owner.id}</button>}
+              {fileJournal && <button className="ghost sm owner" title={t('journal.openHint')} onClick={() => setJournalOf(fileJournal.rootId)}>{t('journal.open')}</button>}
               <div className="files-actions">
                 {(canPreview || isMd) && (
                   <div className="seg">
