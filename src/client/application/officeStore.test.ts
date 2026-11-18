@@ -87,6 +87,18 @@ test('clearing one flow leaves a different selected flow open', async (c) => {
   assert.equal(store.getState().flowTaskId, null);
 });
 
+test('a chain journal opens in the Flow tab, and picking a step from it shows that step instead', async (c) => {
+  c.after(() => mock.timers.reset());
+  const { store } = await office();
+  store.actions.showJournal('t2');
+  assert.deepEqual([store.getState().journalOf, store.getState().drawerTab, store.getState().kanbanOpen], ['t2', 'flow', true]);
+  store.actions.showTask('child');
+  assert.deepEqual([store.getState().journalOf, store.getState().flowTaskId], [null, 'child']);
+  store.actions.showJournal('child');
+  store.actions.showJournal(null);
+  assert.deepEqual([store.getState().journalOf, store.getState().flowTaskId], [null, 'child']);
+});
+
 test('a failure and an approval become signs, not flashes that fade', async (c) => {
   c.after(() => mock.timers.reset());
   const { store, signs, flashes, emit } = await office();

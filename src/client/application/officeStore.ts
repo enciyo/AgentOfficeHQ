@@ -63,6 +63,8 @@ export interface OfficeState {
   standup: { at: number; lines: StandupLine[] } | null;
   /** The task whose details the Flow tab shows. */
   flowTaskId: string | null;
+  /** A task of the chain whose journal the Flow tab shows instead of a step. */
+  journalOf: string | null;
   /** Completed flow roots hidden in this browser; the underlying task history stays intact. */
   flowHidden: string[];
   /** When set, the Outputs tab shows only these files (what a task chain wrote). */
@@ -104,7 +106,7 @@ export function createOfficeStore({ gateway, events, stage, storage, alerts, loc
     theme: (['light', 'dark'] as const).find(v => v === storage.get(THEME_KEY)) ?? 'system',
     selectedId: null, tab: 'tasks', modal: null, kanbanOpen: false, drawerFull: false, drawerTab: 'board', chatOpen: false, chatSeenAt: Number(storage.get(CHAT_SEEN_KEY)) || 0, chatClearedAt: Number(storage.get(CHAT_CLEARED_KEY)) || 0,
     composerFocus: 0, feed: [], toasts: [],
-    flowTaskId: null,
+    flowTaskId: null, journalOf: null,
     flowHidden: (() => {
       try {
         const value: unknown = JSON.parse(storage.get(FLOW_HIDDEN_KEY) ?? '[]');
@@ -446,7 +448,9 @@ export function createOfficeStore({ gateway, events, stage, storage, alerts, loc
     openOutput: (path: string) => set({ outputPath: path, drawerTab: 'files', kanbanOpen: true }),
     clearOutputsFocus: () => set({ outputsFocus: null }),
     /** Opens the Flow tab on a task. */
-    showTask: (taskId: string | null) => set(taskId ? { flowTaskId: taskId, drawerTab: 'flow', kanbanOpen: true } : { flowTaskId: null }),
+    showTask: (taskId: string | null) => set(taskId ? { flowTaskId: taskId, journalOf: null, drawerTab: 'flow', kanbanOpen: true } : { flowTaskId: null, journalOf: null }),
+    /** The journal of the chain `taskId` belongs to, in the Flow tab; null closes it. */
+    showJournal: (taskId: string | null) => set(taskId ? { journalOf: taskId, drawerTab: 'flow', kanbanOpen: true } : { journalOf: null }),
     addSchedule: async (agentId: string, draft: ScheduleDraft) => !!(await attempt(async () => { await gateway.createSchedule({ agentId, ...draft }); toast(t('sched.added')); return true; })),
     toggleSchedule: (id: string, enabled: boolean) => attempt(() => gateway.updateSchedule(id, { enabled })),
     removeSchedule: (id: string) => attempt(() => gateway.deleteSchedule(id)),
