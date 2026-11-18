@@ -589,3 +589,24 @@ a.button-link.sm { font-size: 12px; padding: 3px 9px; }
 .files-frame { flex: 1; min-height: 320px; width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .files-img { flex: 1; display: flex; align-items: flex-start; justify-content: center; }
 .files-img img { max-width: 100%; max-height: 100%; border-radius: 6px; }
+
+/* Task journal: a chain's handoffs in order, what needs the CEO first */
+.journal { gap: 8px; }
+.journal-title { font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.journal-title code { font: 11px var(--mono); color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
+.journal-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.journal-entry { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; display: flex; flex-direction: column; gap: 3px; }
+.journal-entry.flag { border-color: var(--err-text); background: var(--err-soft); }
+.journal-entry.flag.pending { border-color: var(--warn-text); background: var(--warn-soft); }
+.journal-head { all: unset; cursor: pointer; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.journal-head:hover .who-line, .journal-head:focus-visible .who-line { text-decoration: underline; }
+.journal-head .kind { font-size: 10.5px; color: var(--accent); background: var(--accent-soft); border-radius: 99px; padding: 0 6px; }
+.journal-head .meta { margin-left: auto; color: var(--muted); font: 11px var(--mono); }
+.journal-state { font-size: 11.5px; color: var(--muted); }
+.journal-entry.flag .journal-state { color: var(--err-text); font-weight: 600; }
+.journal-entry.flag.pending .journal-state { color: var(--warn-text); }
+.journal-sum { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.journal-meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--muted); }
+.journal-meta code { font: 11px var(--mono); }
+.journal-files { display: flex; flex-wrap: wrap; gap: 4px; }
+.files-tree .recent.journals .sec-label { padding: 2px 8px; }
