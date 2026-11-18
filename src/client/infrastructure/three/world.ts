@@ -13,6 +13,7 @@ import { TASK_DRAG_TYPE, type KeyValueStorage, type PlayerActionMode, type Stage
 import type { Attention } from '../../domain/attention.ts';
 import type { Office, PublicAgent, Visitor } from '../../../shared/types.ts';
 import type { Weather } from '../../domain/fun.ts';
+import { AutoQuality } from '../../domain/autoQuality.ts';
 import { QUALITY_LEVELS, defaultGraphics, type Graphics } from '../../domain/quality.ts';
 import type { StandupLine } from '../../domain/views.ts';
 import { Avatar, rand, type Goal } from './avatar.ts';
@@ -68,6 +69,10 @@ export class World {
   private level = defaultGraphics(false).level;
   private quality = QUALITY_LEVELS[this.level]!;
   private autoQuality = true;
+  /** Decides automatic steps; the level the CEO chose is its ceiling. */
+  private auto = new AutoQuality(this.level);
+  /** Milliseconds the last frame's own work took (what a frame cap hides from the frame rate). */
+  private lastWork = 0;
   private framesSinceShadow = 0;
   private covered = false;
   container: HTMLElement;
@@ -106,7 +111,6 @@ export class World {
   grid: Uint8Array = new Uint8Array(0);
   player!: Avatar;
   playerInfo?: { name?: string; color?: string };
-  perf?: { time: number; frames: number; slow: number };
   /** Idle spots (a sofa seat, a bed, a place in front of the coffee machine) held by one avatar each. */
   private readonly spotClaims = new Map<string, string>();
   /** Where each claimed spot is: two items' spots can lie side by side, and nobody stands in someone else's place. */
@@ -1042,26 +1046,22 @@ export class World {
 
   // ------------------------------------------------ loop
 
-  /** With `auto` on, steps quality down one level while the frame rate stays low; the chosen level stays as it is. */
+  /**
+   * With `auto` on, steps quality down while the frame rate stays low (and undoes a step that did not help), and back
+   * up toward the chosen level once there is room for a while; see AutoQuality for the rules.
+   */
   adaptQuality(rawDt: number) {
     // Startup and tab pauses should not skew the measurement
-    if (!this.autoQuality || this.level === 0 || this.covered || document.hidden || rawDt > 0.25 || this.clock.elapsedTime < 4) return;
-    this.perf = this.perf || { time: 0, frames: 0, slow: 0 };
-    this.perf.time += rawDt;
-    this.perf.frames++;
-    if (this.perf.time < 3) return;
-    const fps = this.perf.frames / this.perf.time;
-    const slow = fps < 28 ? this.perf.slow + 1 : 0;
-    this.perf = { time: 0, frames: 0, slow };
-    if (slow < 2) return;
-    this.perf.slow = 0;
-    this.applyQuality(this.level - 1);
-    console.info(`[world] FPS ${fps.toFixed(0)} — quality level ${this.level}`);
+    if (!this.autoQuality || this.covered || document.hidden || rawDt > 0.25 || this.clock.elapsedTime < 4) return;
+    const step = this.auto.frame(this.clock.elapsedTime, rawDt, this.lastWork);
+    if (!step) return;
+    this.applyQuality(step.level);
+    console.info(`[world] quality level ${step.level} (${step.reason})`);
   }
 
   setGraphics({ level, auto }: Graphics) {
     this.autoQuality = auto;
-    this.perf = undefined;
+    this.auto = new AutoQuality(level);
     this.applyQuality(level);
   }
 
@@ -1118,6 +1118,7 @@ export class World {
   private loop = () => {
     const started = performance.now();
     this.frame();
+    this.lastWork = performance.now() - started;
     const gap = this.covered ? COVERED_FRAME_MS : this.quality.fps ? 1000 / this.quality.fps : 0;
     const wait = gap - (performance.now() - started);
     if (wait > 1 && !document.hidden) setTimeout(this.loop, wait);
