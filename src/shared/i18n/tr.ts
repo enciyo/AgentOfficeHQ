@@ -356,7 +356,7 @@ export const tr = {
   'settings.section.rules': 'Kurallar',
   'settings.section.team': 'Ekip ve veri',
   'settings.quality': "Grafik",
-  'settings.qualityAuto': "Kare hızı düşünce kendiliğinden azalt",
+  'settings.qualityAuto': "Kendiliğinden ayarla: kare hızı düşünce azalt, yer açılınca geri yükselt",
   'settings.qualityHint': "Hemen uygulanır ve bu tarayıcıda saklanır. Tam ekran bir sayfa ofisi kapatırken ofis çizilmez.",
   'quality.performance': "Performans",
   'quality.quality': "Kalite",
