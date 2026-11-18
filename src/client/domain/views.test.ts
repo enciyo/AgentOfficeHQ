@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createT } from '../../shared/i18n/index.ts';
 import type { Approval, ProviderHold, ProviderInfo, PublicAgent, Task } from '../../shared/types.ts';
-import { MAX_DROP_BYTES, mergeBadge, patchLines, resolvable, chainActive, chainHoldLabel, cliStatus, holdLabel, chainFiles, reportWait, retryable, waitLabel, fileOwners, filterTrees, chatItems, costBreakdown, costUnknown, dropProblem, dropPrompt, fileTree, spentToday, standupLines, taskCostText, taskTrees, treeCostText } from './views.ts';
+import { MAX_DROP_BYTES, mergeBadge, patchLines, resolvable, chainActive, chainHoldLabel, cliStatus, holdLabel, chainFiles, reportWait, retryable, waitLabel, fileOwners, filterTrees, chatItems, costBreakdown, costUnknown, dropProblem, dropPrompt, fileTree, spentToday, standupLines, taskCostText, taskTrees, treeCostText, requestJournals } from './views.ts';
 
 const t = createT('en');
 let n = 0;
@@ -249,4 +249,16 @@ test('patch lines tell headers from changes, even a changed line that looks like
   const patch = ['diff --git a/x b/x', 'index 1..2 100644', '--- a/x', '+++ b/x', '@@ -1,2 +1,2 @@', ' same', '--- removed', '+++ added', 'diff --git a/y b/y', '--- a/y'].join('\n');
   assert.deepEqual(patchLines(patch).map(l => l.kind), ['file', 'file', 'file', 'file', 'hunk', 'context', 'del', 'add', 'file', 'file']);
   assert.deepEqual(patchLines(''), []);
+});
+
+test('request journals: one per docs/<code>/ folder, its latest chain, newest first', () => {
+  const at = (id: string, over: Partial<Task>) => ({ id, agentId: 'a', from: 'user', prompt: '', parentId: null, depth: 0, kind: 'task', status: 'done', createdAt: 1, startedAt: 1, endedAt: 1, result: '', cost: 0, ...over }) as Task;
+  const tasks = [
+    at('old', { endedAt: 10, files: ['docs/login/1-requirements.md'] }),
+    at('new', { endedAt: 20 }),
+    at('kid', { parentId: 'new', endedAt: 30, files: ['docs/login/2-analysis.md'] }),
+    at('other', { endedAt: 25, files: ['docs/search/1-requirements.md'] }),
+    at('none', { endedAt: 40, files: ['notes.md'] }),
+  ];
+  assert.deepEqual(requestJournals(tasks), [{ code: 'login', rootId: 'new', at: 30 }, { code: 'search', rootId: 'other', at: 25 }]);
 });

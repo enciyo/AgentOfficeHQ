@@ -1,7 +1,8 @@
 // Pure derivations of what the UI shows, from the raw state.
 import type { Locale, TKey, Translate } from '../../shared/i18n/index.ts';
 import { teamColors } from '../../shared/layout.ts';
-import type { ChainBlock } from '../../shared/chain.ts';
+import { chainRootId, type ChainBlock } from '../../shared/chain.ts';
+import { requestCode } from '../../shared/journal.ts';
 import type { Approval, Office, ProviderHold, ProviderInfo, PublicAgent, Task } from '../../shared/types.ts';
 import { formatDateTime } from './format.ts';
 
@@ -282,4 +283,24 @@ export function filterTrees(trees: TaskNode[], filter: FlowFilter, query: string
   const failed = (n: TaskNode): boolean => n.task.status === 'error' || n.children.some(failed);
   return trees.filter(n =>
     (filter === 'all' || (filter === 'active' ? n.open : filter === 'failed' ? failed(n) : !n.open && !failed(n))) && (!q || matches(n)));
+}
+
+export interface RequestJournal { code: string; rootId: string; at: number }
+
+/** Chains that write under a request folder (docs/<code>/), newest activity first; one per code, its latest chain. */
+export function requestJournals(tasks: Task[]): RequestJournal[] {
+  const byRoot = new Map<string, { files: string[]; at: number }>();
+  for (const t of tasks) {
+    const rootId = chainRootId(tasks, t);
+    const entry = byRoot.get(rootId) ?? { files: [], at: 0 };
+    entry.files.push(...(t.files ?? []));
+    entry.at = Math.max(entry.at, t.endedAt ?? t.startedAt ?? t.createdAt);
+    byRoot.set(rootId, entry);
+  }
+  const byCode = new Map<string, RequestJournal>();
+  for (const [rootId, { files, at }] of byRoot) {
+    const code = requestCode(files);
+    if (code && (byCode.get(code)?.at ?? -1) < at) byCode.set(code, { code, rootId, at });
+  }
+  return [...byCode.values()].sort((a, b) => b.at - a.at);
 }
