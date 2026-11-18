@@ -39,6 +39,28 @@ Ajan CLI'ları otomatik bulunur (`PATH`, `~/.local/bin`; Claude için Claude mas
 </p>
 <p align="center"><em>Eğlenceli bir eylem seç ve Space ile uygula.</em></p>
 
+## Örnek: bir isteğin baştan teslimata yolculuğu
+
+Aşağıdaki örnek varsayılan şirketle bir isteğin nasıl ilerlediğini gösterir. İsteğe bağlı ayarlar kapalıyken de çalışır; açarsan 5. adımdaki inceleme ve onay adımları eklenir.
+
+**Başlamadan önce (isteğe bağlı):** ⚙️ Ayarlar → *Çalışma* bölümünde *Her ajan kendi git worktree'sinde çalışsın* seçeneğini, ardından *Birleştirmeden önce onay iste* seçeneğini aç. Test takımı komut çalıştırır; bu yüzden Test ajanlarının **Ek izinli araçlar** alanına örneğin `Bash(npm test:*)` ekle (bkz. [İzinler hakkında](#izinler-hakkinda)).
+
+1. **CEO işi verir.** Sağ alttaki 💬 sohbeti açıp Ürün Yöneticisi'ne (Product Manager) yaz, örneğin *"Giriş sayfasına 'Beni hatırla' kutucuğu ekle."* Ürün Yöneticisi isteğe bir kod verir (örneğin `login-page`), gerekirse Ürün takımıyla keşif yapar ve `docs/login-page/1-gereksinimler.md` dosyasını yazar.
+2. **Aşama aşama devredilir.** Ürün Yöneticisi işi Analiz liderine verir. Ofiste lider Ürün Yöneticisi'ne yürür ve bir zarf uçar. Lider işi takımıyla bölüşür, kendi payını yapar, parçaları birleştirir ve **tek** bir rapor gönderir. Ürün Yöneticisi ancak bundan sonra işi Tasarım'a, ardından Yazılım'a, sonra Test'e verir. Çekmecedeki *Akış* sekmesi zinciri ağaç olarak gösterir (kim kime ne verdi, durum, süre, maliyet); bir adımı seçerek canlı *Transkript*'ini okuyabilirsin.
+3. **Bir test başarısız olur.** Test liderinin raporu `KALDI` ile başlar ve hataları önem sırasıyla listeler. Ürün Yöneticisi hataları Yazılım liderine geri verir (en fazla 2 düzeltme turu; sonrasında kalan sorunlar sana bildirilir).
+4. **Düzeltme gelir ve yeniden test edilir.** Yazılım takımı düzeltmeyi gönderir, Ürün Yöneticisi işi yeniden Test'e verir ve bu kez rapor `GEÇTİ` der.
+5. **İşin birleştirilmesi** (worktree açıkken). Her ajan kendi `agent/<ad>` dalında çalışır. Dosya değiştiren bir çalışmadan sonra:
+   - *Birleştirmeden önce onay iste* **kapalıysa** değişiklikler hemen commit edilip ana dala birleştirilir ve görev *Birleştirildi* olarak görünür;
+   - **açıksa** görev *Onay bekliyor* olarak görünür ve istek *Onaylar* sekmesine düşer (üst çubukta rozet çıkar). *Değişiklikleri gör* farkı gösterir; *Onayla* birleştirir, *Reddet* işi daldan siler. Sen karar verene kadar o ajanın raporu bekler ve ajan yeni işe başlamaz.
+   - Birleştirme çakışmasında görev *Çakışma* olarak görünür ve ajanın üzerinde 🔀 işareti çıkar; *Ajana çözdür* çakışmayı aynı ajana geri verir.
+6. **Teslimat.** Ürün Yöneticisi sohbette sana bir teslimat özeti gönderir: ne yapıldı, dosyalar nerede, nasıl denenir ve açık riskler. Her aşamanın çıktısı *Çıktılar* sekmesinde `docs/login-page/` altında durur.
+
+**Bir ajan onay istediğinde.** ⚙️ Ayarlar → *Kurallar* → *Onay gerektiren adımlar* listesindeki bir adımdan önce (push, deploy, dosya silme, yeni bağımlılık, …) ajan `request_approval` çağırır ve sırasını bitirir. Beklerken:
+
+- ajan masasında kalır ve başının üzerinde 🙋 işareti görünür; aynı neden takım listesinde de yazar, ikisine tıklamak da *Onaylar* sekmesini açar;
+- *Akış*'ta adımın *Transkript*'i `request_approval` çağrısını tüm girdisiyle gösterir;
+- kararın (ve isteğe bağlı notun) ajana yeni bir mesaj olarak gider ve **aynı oturumu** sürdürür; ajan kaldığı yerden devam eder. Yöneticisine giden raporu ancak karara göre hareket ettikten sonra gönderilir.
+
 ## Özellikler
 
 - **İşe alım** — yapay zekâ ajanı veya insan çalışan işe al. Ajanlar Claude Code, Codex CLI ya da Cursor CLI kullanabilir; diğer sağlayıcılar için [CONTRIBUTING.md](CONTRIBUTING.md) dosyasına bak. Rol, model, izin modu, çalışma klasörü, ek araç izinleri ve takım atanabilir.
@@ -89,6 +111,7 @@ Komutlar: `npm start` istemciyi derleyip sunucuyu başlatır; `npm run dev` Vite
 
 Ajan günlükleri `data/logs/<agent>.jsonl` altında tutulur. Gerçek verilere dokunmadan denemek için `AGENT_OFFICE_DATA=/other/dir PORT=4400 npm start` kullanabilirsin. Paylaşılan çalışma klasörünün varsayılanı `workspace/` dizinidir.
 
+<a id="izinler-hakkinda"></a>
 ## İzinler hakkında
 
 Varsayılan izin modu `acceptEdits`'tir: ajan dosyaları okuyup düzenleyebilir ancak kabuk komutlarını çalıştıramaz. Komut çalıştırması gerekiyorsa ajanın **Ek izinli araçlar** alanına örneğin `Bash(npm test:*)` ekle veya **Tam yetki** (`bypassPermissions`) seç. Tam yetki, ajanın her komutu onay istemeden çalıştırması anlamına gelir.
