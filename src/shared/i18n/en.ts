@@ -357,7 +357,7 @@ export const en: Record<keyof typeof tr, string> = {
   'settings.section.rules': 'Rules',
   'settings.section.team': 'Team and data',
   'settings.quality': "Graphics",
-  'settings.qualityAuto': "Lower it by itself when the frame rate drops",
+  'settings.qualityAuto': "Adjust it by itself: lower when the frame rate drops, back up when there is room",
   'settings.qualityHint': "Applied at once and kept in this browser. The office is not drawn while a full-screen page covers it.",
   'quality.performance': "Performance",
   'quality.quality': "Quality",

@@ -91,7 +91,7 @@ Aşağıdaki örnek varsayılan şirketle bir isteğin nasıl ilerlediğini gös
 | Zemine tıkla | Karakteri tıklanan konuma yürüt |
 | `Esc` | Paneli veya görev panosunu kapat |
 
-Oyuncunun adı ve rengi ⚙️ Ayarlar'dan değiştirilebilir. *Genel* bölümünde 3B ofisin performans/kalite ayarı bulunur. Tam ekran sayfa ofisin üzerini kapladığında sahne çizilmez.
+Oyuncunun adı ve rengi ⚙️ Ayarlar'dan değiştirilebilir. *Genel* bölümünde 3B ofisin performans/kalite ayarı bulunur; varsayılan olarak kare hızı düşünce kendiliğinden azalır, kareleri hızlandırmayan bir düşüşü geri alır ve yer açılınca seçilen seviyeye geri yükselir (sınırda bir GPU seviyeler arasında gidip gelmesin diye yavaşça). Tam ekran sayfa ofisin üzerini kapladığında sahne çizilmez.
 
 ## Proje yapısı
 

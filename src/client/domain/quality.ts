@@ -27,7 +27,7 @@ export const MAX_QUALITY = QUALITY_LEVELS.length - 1;
 
 export interface Graphics {
   level: number;
-  /** Steps down by itself while the frame rate stays low. */
+  /** Steps down by itself while the frame rate stays low, and back up to `level` once there is room again. */
   auto: boolean;
 }
 
