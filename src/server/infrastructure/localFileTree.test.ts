@@ -67,3 +67,27 @@ test('raw bytes and deletes stay inside the root and never touch repository stat
   assert.ok(!fs.existsSync(path.join(root, 'site')));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('writes make their folders inside the root and never follow a link out of it', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ao-files-'));
+  const root = path.join(tmp, 'work');
+  fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
+  fs.mkdirSync(path.join(tmp, 'elsewhere'));
+  fs.writeFileSync(path.join(tmp, 'secret.txt'), 'nope');
+  fs.symlinkSync(path.join(tmp, 'elsewhere'), path.join(root, 'out'));
+  fs.symlinkSync(path.join(tmp, 'secret.txt'), path.join(root, 'docs', 'link.md'));
+  const files = new LocalFileTree();
+
+  assert.equal(files.write(root, 'docs/login-page/journal.md', '# J'), true);
+  assert.equal(fs.readFileSync(path.join(root, 'docs/login-page/journal.md'), 'utf8'), '# J');
+  assert.equal(files.write(root, 'docs/login-page/journal.md', '# J2'), true, 'overwrites its own file');
+  assert.equal(fs.readFileSync(path.join(root, 'docs/login-page/journal.md'), 'utf8'), '# J2');
+
+  assert.equal(files.write(root, '../x.md', 'no'), false);
+  assert.equal(files.write(root, path.join(tmp, 'x.md'), 'no'), false);
+  assert.equal(files.write(root, 'out/new/journal.md', 'no'), false, 'not through a symlinked folder');
+  assert.ok(!fs.existsSync(path.join(tmp, 'elsewhere', 'new')), 'no folder is made out there either');
+  assert.equal(files.write(root, 'docs/link.md', 'no'), false, 'not through a link to a file outside');
+  assert.equal(fs.readFileSync(path.join(tmp, 'secret.txt'), 'utf8'), 'nope');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
