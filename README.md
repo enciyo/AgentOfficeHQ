@@ -39,6 +39,28 @@ Agent CLIs are found automatically (PATH, `~/.local/bin`, for Claude also the CL
 </p>
 <p align="center"><em>Choose a playful action and trigger it with Space.</em></p>
 
+## Example: one request from start to delivery
+
+This walks through a request with the default company. It works without the optional settings; turning them on adds the review and approval steps shown in step 5.
+
+**Before you start (optional):** in ⚙️ Settings → *Work*, turn on *Give each agent its own git worktree* and then *Ask for approval before merging*. The test team runs commands, so give the Test agents e.g. `Bash(npm test:*)` in **extra allowed tools** (see [About permissions](#about-permissions)).
+
+1. **The CEO gives the task.** Open the 💬 chat at the bottom right and write to the Product Manager, e.g. *"Add a 'Remember me' checkbox to the login page."* The PM gives the request a code (say `login-page`), runs discovery with the Product team if needed, and writes `docs/login-page/1-requirements.md`.
+2. **Handed down one stage at a time.** The PM gives the work to the Analysis lead. In the office the lead walks over to the PM and an envelope flies. The lead splits the work within the team, does their own share, merges the parts and sends **one** report back. Only then does the PM hand it to Design, then Development, then Test. The drawer's *Flow* tab shows the chain as a tree (who gave what to whom, status, duration, cost); pick a step to read its live *Transcript*.
+3. **A test fails.** The Test lead's report starts with `FAILED` and lists the bugs by severity. The PM gives the bugs back to the Development lead (at most 2 fix rounds; anything left after that goes to you).
+4. **The fix arrives and is tested again.** Development sends the fix, the PM gives it to Test again, and this time the report says `PASSED`.
+5. **Merging the work** (with worktrees on). Each agent works on its own `agent/<name>` branch. After a run that changed files:
+   - with *Ask for approval before merging* **off**, it is committed and merged into the main branch right away, and the task shows *Merged*;
+   - with it **on**, the task shows *Awaiting approval* and the request appears in the *Approvals* tab (badge in the top bar). *See the changes* shows the diff; *Approve* merges it, *Reject* drops it from the branch. Until you decide, that agent's report waits and it starts nothing new.
+   - On a merge conflict the task shows *Conflict* and the agent gets a 🔀 sign; *Have the agent resolve it* gives the conflict back to the same agent.
+6. **Delivery.** The PM sends you a delivery summary in the chat: what was done, where the files are, how to try it, and open risks. Every stage's output is in the *Outputs* tab under `docs/login-page/`.
+
+**When an agent asks for approval.** Before a step listed in ⚙️ Settings → *Rules* → *Steps that need approval* (push, deploy, deleting files, new dependencies, …), the agent calls `request_approval` and ends its turn. While it waits:
+
+- the agent stays at its desk with a 🙋 sign overhead, and the same reason shows in the team list; clicking either opens the *Approvals* tab;
+- in *Flow*, the step's *Transcript* shows the `request_approval` call with its full input;
+- your decision (and optional note) is sent to the agent as a new message and continues its **same session**, so it picks up where it stopped. Its report to its boss goes up only after it has acted on the decision.
+
 ## Features
 
 - **Hiring** — an AI agent or a human worker. Each AI agent picks its CLI: Claude Code, Codex CLI or Cursor CLI (more via [providers](CONTRIBUTING.md)); Cursor agents cannot delegate (no per-run MCP). Role presets, model, permission mode, working directory, extra allowed tools and team.
